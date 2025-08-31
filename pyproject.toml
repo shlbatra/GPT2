@@ -3,7 +3,7 @@ name = "gpt-repo"
 version = "0.1.0"
 description = "Build simple GPT2 Model"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = "==3.12"
 dependencies = [
     "datasets>=3.5.1",
     "ipykernel>=6.29.5",

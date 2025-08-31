@@ -9,37 +9,19 @@ import math
 import time
 from data.dataload import DataLoaderLite
 from gpt_module.gpt import GPT, GPTConfig
+from config import TrainingConfig
+from distributed import setup_distributed
+from checkpointing import CheckpointConfig
 
+distributed_config = setup_distributed()
+ddp = distributed_config['ddp']
+ddp_rank = distributed_config['ddp_rank']
+ddp_local_rank = distributed_config['ddp_local_rank']
+ddp_world_size = distributed_config['ddp_world_size']
+master_process = distributed_config['master_process']
+device = distributed_config['device']
+device_type = 'cuda' if 'cuda' in device else 'cpu' # for later use in torch.autocast
 
-# set up DDP (distributed data parallel).
-# torchrun command sets the env variables RANK, LOCAL_RANK, and WORLD_SIZE
-ddp = int(os.environ.get('RANK', -1)) != -1 # is this a ddp run?
-if ddp:
-    # use of DDP atm demands CUDA, we set the device appropriately according to rank
-    assert torch.cuda.is_available(), "for now i think we need CUDA for DDP"
-    init_process_group(backend='nccl')
-    ddp_rank = int(os.environ['RANK'])
-    ddp_local_rank = int(os.environ['LOCAL_RANK'])
-    ddp_world_size = int(os.environ['WORLD_SIZE'])
-    device = f'cuda:{ddp_local_rank}'
-    torch.cuda.set_device(device)
-    master_process = ddp_rank == 0 # this process will do logging, checkpointing etc.
-else:
-    # vanilla, non-DDP run
-    ddp_rank = 0
-    ddp_local_rank = 0
-    ddp_world_size = 1
-    master_process = True
-    # attempt to autodetect device
-    device = "cpu"
-    if torch.cuda.is_available():
-        device = "cuda"
-    elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-        device = "mps"
-    print(f"using device: {device}")
-
-# added after video, pytorch can be serious about it's device vs. device_type distinction
-device_type = "cuda" if device.startswith("cuda") else "cpu"
 
 torch.manual_seed(1337)
 if torch.cuda.is_available():
@@ -47,9 +29,13 @@ if torch.cuda.is_available():
 
 enc = tiktoken.get_encoding("gpt2")
 
-total_batch_size = 524288 # 2**19, ~0.5M, in number of tokens
-B = 8 #64 # micro batch size
-T = 512 #1024 # sequence length
+TrainingConfig = TrainingConfig() # instantiate the config
+max_steps = TrainingConfig.max_steps
+get_lr = TrainingConfig.get_lr
+total_batch_size = TrainingConfig.total_batch_size
+B = TrainingConfig.B
+T = TrainingConfig.T
+
 assert total_batch_size % (B * T * ddp_world_size) == 0, "make sure total_batch_size is divisible by B * T * ddp_world_size"
 grad_accum_steps = total_batch_size // (B * T * ddp_world_size)
 if master_process:
@@ -72,30 +58,15 @@ if ddp:
     model = DDP(model, device_ids=[ddp_local_rank])
 raw_model = model.module if ddp else model # always contains the "raw" unwrapped model
 
-max_lr = 6e-4
-min_lr = max_lr * 0.1
-warmup_steps = 715
-max_steps = 19073 # 19,073 steps is ~1 epoch, if data is 10B tokens and batch size 0.5M tokens
-def get_lr(it):
-    # 1) linear warmup for warmup_iters steps
-    if it < warmup_steps:
-        return max_lr * (it+1) / warmup_steps
-    # 2) if it > lr_decay_iters, return min learning rate
-    if it > max_steps:
-        return min_lr
-    # 3) in between, use cosine decay down to min learning rate
-    decay_ratio = (it - warmup_steps) / (max_steps - warmup_steps)
-    assert 0 <= decay_ratio <= 1
-    coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio)) # coeff starts at 1 and goes to 0
-    return min_lr + coeff * (max_lr - min_lr)
 
 # optimize!
 optimizer = raw_model.configure_optimizers(weight_decay=0.1, learning_rate=6e-4, device_type=device_type)
 
 # create the log directory we will write checkpoints to and log to
-log_dir = "log"
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, f"log.txt")
+
+CheckpointConfig = CheckpointConfig() # instantiate the config
+log_file = CheckpointConfig.log_file
+
 with open(log_file, "w") as f: # open for writing to clear the file - train loss, val loss and hellaswag accuracy
     pass
 

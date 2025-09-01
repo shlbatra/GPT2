@@ -14,7 +14,7 @@ def setup_distributed():
         device = "cuda"
     elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
         device = "mps"
-
+    device_type = 'cuda' if 'cuda' in device else 'cpu' # for later use in torch.autocast
     if ddp:
         # use of DDP atm demands CUDA, we set the device appropriately according to rank
         assert torch.cuda.is_available(), "for now i think we need CUDA for DDP"
@@ -31,7 +31,8 @@ def setup_distributed():
             'ddp_local_rank': ddp_local_rank,
             'ddp_world_size': ddp_world_size,
             'master_process': master_process,
-            'device': device
+            'device': device,
+            'device_type': device_type
         }
     else:
         # vanilla, non-DDP run
@@ -45,7 +46,8 @@ def setup_distributed():
             'ddp_local_rank': ddp_local_rank,
             'ddp_world_size': ddp_world_size,
             'master_process': master_process,
-            'device': device
+            'device': device,
+            'device_type': device_type
         }
     
 

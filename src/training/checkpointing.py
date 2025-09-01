@@ -7,6 +7,8 @@ class CheckpointConfig:
         self.checkpoint_dir = checkpoint_dir
         log_dir = os.makedirs(self.checkpoint_dir, exist_ok=True)
         log_file = os.path.join(log_dir, file)
+        with open(log_file, "w") as f: # open for writing to clear the file - train loss, val loss and hellaswag accuracy
+            pass
 
     def save_checkpoint(model, config, step, val_loss, log_dir):
         # optionally write model checkpoints

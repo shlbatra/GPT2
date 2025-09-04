@@ -12,9 +12,9 @@ class Evaluator:
         self.ddp_config = ddp_config
         self.logger = logger
 
-        assert self.config.total_batch_size % (self.config.B * self.config.T * self.ddp_config.ddp_world_size) == 0, "make sure total_batch_size is divisible by B * T * ddp_world_size"
-        grad_accum_steps = self.config.total_batch_size // (self.config.B * self.config.T * self.ddp_config.ddp_world_size)
-        if self.ddp_config.master_process:
+        assert self.config.total_batch_size % (self.config.B * self.config.T * self.ddp_config['ddp_world_size']) == 0, "make sure total_batch_size is divisible by B * T * ddp_world_size"
+        grad_accum_steps = self.config.total_batch_size // (self.config.B * self.config.T * self.ddp_config['ddp_world_size'])
+        if self.ddp_config['master_process']:
             print(f"total desired batch size: {self.config.total_batch_size}")
             print(f"=> calculated gradient accumulation steps: {grad_accum_steps}")
 
@@ -26,16 +26,16 @@ class Evaluator:
             val_loss_steps = 20
             for _ in range(val_loss_steps):
                 x, y = val_loader.next_batch()
-                x, y = x.to(self.ddp_config.device), y.to(self.ddp_config.device)
-                with torch.autocast(device_type=self.ddp_config.device_type, dtype=torch.bfloat16):
+                x, y = x.to(self.ddp_config['device']), y.to(self.ddp_config['device'])
+                with torch.autocast(device_type=self.ddp_config['device_type'], dtype=torch.bfloat16):
                     logits, loss = self.model(x, y)
                 loss = loss / val_loss_steps
                 val_loss_accum += loss.detach()
-        if self.ddp_config.ddp:
+        if self.ddp_config['ddp']:
             dist.all_reduce(val_loss_accum, op=dist.ReduceOp.AVG)
-        if self.ddp_config.master_process:
+        if self.ddp_config['master_process']:
             print(f"validation loss: {val_loss_accum.item():.4f}")
-            with open(self.logger.log_file, "a") as f:
+            with open(self.logger, "a") as f:
                 f.write(f"{step} val {val_loss_accum.item():.4f}\n")
             if step > 0 and (step % 5000 == 0 or last_step):
                 # optionally write model checkpoints
@@ -54,13 +54,13 @@ class Evaluator:
         tokens = encoder.encode("Hello, I'm a language model,")
         tokens = torch.tensor(tokens, dtype=torch.long)
         tokens = tokens.unsqueeze(0).repeat(num_return_sequences, 1)
-        xgen = tokens.to(self.ddp_config.device)
-        sample_rng = torch.Generator(device=self.ddp_config.device)
-        sample_rng.manual_seed(42 + self.ddp_config.ddp_rank)
+        xgen = tokens.to(self.ddp_config['device'])
+        sample_rng = torch.Generator(device=self.ddp_config['device'])
+        sample_rng.manual_seed(42 + self.ddp_config['ddp_rank'])
         while xgen.size(1) < max_length:
             # forward the model to get the logits
             with torch.no_grad():
-                with torch.autocast(device_type=self.ddp_config.device_type, dtype=torch.bfloat16):
+                with torch.autocast(device_type=self.ddp_config['device_type'], dtype=torch.bfloat16):
                     logits, loss = self.model(xgen) # (B, T, vocab_size)
                 # take the logits at the last position
                 logits = logits[:, -1, :] # (B, vocab_size)
@@ -84,29 +84,29 @@ class Evaluator:
         num_total = 0
         for i, example in enumerate(iterate_examples("val")):
             # only process examples where i % ddp_world_size == ddp_rank
-            if i % self.ddp_config.ddp_world_size != self.ddp_config.ddp_rank:
+            if i % self.ddp_config['ddp_world_size'] != self.ddp_config['ddp_rank']:
                 continue
             # render the example into tokens and labels
             _, tokens, mask, label = render_example(example)
-            tokens = tokens.to(self.ddp_config.device)
-            mask = mask.to(self.ddp_config.device)
+            tokens = tokens.to(self.ddp_config['device'])
+            mask = mask.to(self.ddp_config['device'])
             # get the logits
             with torch.no_grad():
-                with torch.autocast(device_type=self.ddp_config.device_type, dtype=torch.float16):
+                with torch.autocast(device_type=self.ddp_config['device_type'], dtype=torch.float16):
                     logits, loss = self.model(tokens)
                 pred_norm = get_most_likely_row(tokens, mask, logits) # predict option wuth lowest loss
             num_total += 1
             num_correct_norm += int(pred_norm == label)
         # reduce the stats across all processes
-        if self.ddp_config.ddp:
-            num_total = torch.tensor(num_total, dtype=torch.long, device=self.ddp_config.device)
-            num_correct_norm = torch.tensor(num_correct_norm, dtype=torch.long, device=self.ddp_config.device)
+        if self.ddp_config['ddp']:
+            num_total = torch.tensor(num_total, dtype=torch.long, device=self.ddp_config['device'])
+            num_correct_norm = torch.tensor(num_correct_norm, dtype=torch.long, device=self.ddp_config['device'])
             dist.all_reduce(num_total, op=dist.ReduceOp.SUM)
             dist.all_reduce(num_correct_norm, op=dist.ReduceOp.SUM)
             num_total = num_total.item()
             num_correct_norm = num_correct_norm.item()
         acc_norm = num_correct_norm / num_total
-        if self.ddp_config.master_process:
+        if self.ddp_config['master_process']:
             print(f"HellaSwag accuracy: {num_correct_norm}/{num_total}={acc_norm:.4f}")
-            with open(self.logger.log_file, "a") as f:
+            with open(self.logger, "a") as f:
                 f.write(f"{step} hella {acc_norm:.4f}\n")

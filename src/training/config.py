@@ -2,7 +2,7 @@ import math
 from dataclasses import dataclass
 
 @dataclass
-  class TrainingConfig:
+class TrainingConfig:
     max_lr = 6e-4
     min_lr = max_lr * 0.1
     warmup_steps = 715

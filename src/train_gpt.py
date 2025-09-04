@@ -68,8 +68,8 @@ if __name__ == "__main__":
     log_file = CheckpointConfig.log_file
 
     # model trainer and evaluator
-    model_trainer = Trainer(raw_model, optimizer, TrainingConfig, distributed_config, log_file)
-    model_evaluator = Evaluator(raw_model, optimizer, val_loader, TrainingConfig, distributed_config, log_file)
+    model_trainer = Trainer(raw_model, optimizer, train_loader, TrainingConfig, distributed_config, log_file)
+    model_evaluator = Evaluator(raw_model, optimizer, TrainingConfig, distributed_config, log_file)
 
     # Training loop
     for step in range(max_steps):
@@ -78,11 +78,11 @@ if __name__ == "__main__":
 
         # once in a while evaluate our validation loss
         if step % 250 == 0 or last_step:
-            model_evaluator.evaluate(model_trainer.model, val_loader, step, last_step)
+            model_evaluator.evaluate(val_loader, step, last_step)
 
-        # once in a while evaluate hellaswag
-        if (step % 250 == 0 or last_step) and (not use_compile): # make sure not compile
-            model_evaluator.evaluate_hellaswag(model_trainer.model, val_loader, step, last_step)
+        # once in a while evaluate hellaswag - todo fix this
+        # if (step % 250 == 0 or last_step) and (not use_compile): # make sure not compile
+        #     model_evaluator.evaluate_hellaswag(val_loader, step, last_step)
 
         # once in a while generate from the model (except step 0, which is noise)
         if ((step > 0 and step % 250 == 0) or last_step) and (not use_compile):

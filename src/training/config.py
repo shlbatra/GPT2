@@ -10,8 +10,8 @@ class TrainingConfig:
     total_batch_size = 524288 # 2**19, ~0.5M, in number of tokens
     B = 8 #64 # micro batch size
     T = 512 #1024 # sequence length
-    weight_decay=0.1, 
-    starting_learning_rate=6e-4
+    weight_decay = 0.1
+    starting_learning_rate = 6e-4
 
     def get_lr(self, it):
         # 1) linear warmup for warmup_iters steps

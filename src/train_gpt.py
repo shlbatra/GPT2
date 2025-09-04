@@ -28,8 +28,8 @@ if __name__ == "__main__":
     total_batch_size = TrainingConfig.total_batch_size
     B = TrainingConfig.B
     T = TrainingConfig.T
-    weight_decay=TrainingConfig.weight_decay, 
-    starting_learning_rate=TrainingConfig.starting_learning_rate
+    weight_decay = TrainingConfig.weight_decay
+    starting_learning_rate = TrainingConfig.starting_learning_rate
     grad_accum_steps = total_batch_size // (B * T * ddp_world_size)
 
 

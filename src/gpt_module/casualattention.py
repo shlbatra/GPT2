@@ -4,6 +4,14 @@ import torch.nn.functional as F
 class CausalSelfAttention(nn.Module):
 
     def __init__(self, config):
+        '''
+        config: an instance of the GPTConfig class
+            block_size: max sequence length
+            vocab_size: number of tokens: 50,000 BPE merges + 256 bytes tokens + 1 <|endoftext|> token
+            n_layer: number of layers
+            n_head: number of heads
+            n_embd: embedding dimension
+        '''
         super().__init__()
         assert config.n_embd % config.n_head == 0
         # key, query, value projections for all heads, but in a batch

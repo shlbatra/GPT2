@@ -212,3 +212,6 @@ uv.lock
 
 # data files
 */data/*
+
+# gradient files
+.gradient/

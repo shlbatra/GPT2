@@ -11,6 +11,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Free up space
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        df -h
+
     - name: Build Docker image
       run: |
         docker build -t gpt2-training:latest .

@@ -58,8 +58,7 @@ Thumbs.db
 *.ipynb
 
 # Training data (will be downloaded in container)
-src/data/data_scripts/edu_fineweb10B/
-*.npy
+/data/data_scripts/edu_fineweb10B/*.npy
 
 # Logs and checkpoints (will be created in container)
 logs/

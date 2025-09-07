@@ -1,3 +1,5 @@
+#todo: update the code below to figure out how to run the training script on gpu instance using python sdk
+
 from gradient import JobsClient
 
 if __name__ == "__main__":

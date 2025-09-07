@@ -1,13 +1,6 @@
 # GPT-2 Training Docker Container
 FROM nvidia/cuda:13.0.0-cudnn-runtime-ubuntu24.04
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV CUDA_VISIBLE_DEVICES=0
-ENV OMP_NUM_THREADS=4
-ENV TOKENIZERS_PARALLELISM=false
-
 # Create non-root user for security
 RUN groupadd -r gpt2 && useradd -r -g gpt2 -u 1001 gpt2
 
@@ -35,8 +28,13 @@ ENV UV_PYTHON=python3
 # Set working directory
 WORKDIR /app
 
-# Copy application code
-COPY --chown=gpt2:gpt2 . /app/
+# Copy application code (excluding data_scripts)
+COPY --chown=gpt2:gpt2 src/gpt_module/ /app/gpt_module/
+COPY --chown=gpt2:gpt2 src/training/ /app/training/
+COPY --chown=gpt2:gpt2 src/scripts/ /app/scripts/
+COPY --chown=gpt2:gpt2 src/data_scripts /app/data_scripts
+COPY --chown=gpt2:gpt2 src/train_gpt.py /app/
+COPY pyproject.toml /app/
 
 # Create virtual environment and install dependencies
 RUN uv venv .venv
@@ -47,14 +45,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 RUN uv sync --no-dev
 
 # Create application directories
-RUN mkdir -p /app/data /app/checkpoints /app/logs /app/cache
 RUN chown -R gpt2:gpt2 /app
-
-# Create data and checkpoint directories with proper permissions
-RUN mkdir -p /app/src/data/data_scripts/edu_fineweb10B && \
-    mkdir -p /app/checkpoints && \
-    mkdir -p /app/logs && \
-    chown -R gpt2:gpt2 /app
 
 # Switch to non-root user
 USER gpt2

@@ -2,7 +2,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 import torch
 import tiktoken
 import time
-from data.dataload import DataLoaderLite
+from data_scripts.dataload import DataLoaderLite
 from gpt_module.gpt import GPT, GPTConfig
 from training.config import TrainingConfig
 from training.distributed import DDPConfig
@@ -21,7 +21,8 @@ if __name__ == "__main__":
     ddp_world_size = distributed_config['ddp_world_size']
     device = distributed_config['device']
     device_type = distributed_config['device_type']
-
+    print(f"ddp: {ddp}, ddp_rank: {ddp_rank}, ddp_local_rank: {ddp_local_rank}, ddp_world_size: {ddp_world_size}, device: {device}, device_type: {device_type}")
+    
     TrainingConfig = TrainingConfig() # instantiate the config
     max_steps = TrainingConfig.max_steps
     get_lr = TrainingConfig.get_lr

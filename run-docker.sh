@@ -3,3 +3,6 @@
 
 docker build -t gpt2-training .
 docker run -it gpt2-training
+
+# Run pushed docker image
+docker run --rm -it shlbatra123/gpu_docker_image:latest bash

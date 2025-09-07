@@ -33,6 +33,6 @@ sudo docker pull shlbatra123/gpu_docker_image:latest
 
 # 5. Run your scripts with GPU access
 # sudo docker run --gpus all --rm shlbatra123/gpu_docker_image:latest python data/fineweb.py && python train.py
-sudo docker run --rm shlbatra123/gpu_docker_image:latest python data/data_scripts/fineweb.py && python train_gpt.py
+sudo docker run --rm shlbatra123/gpu_docker_image:latest python data_scripts/fineweb.py && python train_gpt.py
 # 6. Download results to local machine (from local terminal)
 scp -r ubuntu@129.213.148.102:~/my-gpu-project/results ./

@@ -2,7 +2,7 @@
 FROM nvidia/cuda:13.0.0-cudnn-runtime-ubuntu24.04
 
 # Create non-root user for security
-RUN groupadd -r gpt2 && useradd -r -g gpt2 -u 1001 gpt2
+RUN groupadd -r gpt2 && useradd -r -g gpt2 -u 1001 -m gpt2
 
 # Install system dependencies and Python
 RUN apt-get update --allow-insecure-repositories && \
@@ -25,6 +25,11 @@ RUN pip3 install --no-cache-dir --break-system-packages uv
 ENV UV_CACHE_DIR=/tmp/uv-cache
 ENV UV_PYTHON=python3
 
+# Set Hugging Face cache directory
+ENV HF_HOME=/app/.cache/huggingface
+ENV TRANSFORMERS_CACHE=/app/.cache/huggingface/transformers
+ENV HF_DATASETS_CACHE=/app/.cache/huggingface/datasets
+
 # Set working directory
 WORKDIR /app
 
@@ -45,7 +50,8 @@ ENV PATH="/app/.venv/bin:$PATH"
 RUN uv sync --no-dev
 
 # Create application directories
-RUN chown -R gpt2:gpt2 /app
+RUN mkdir -p /app/.cache/huggingface && \
+    chown -R gpt2:gpt2 /app
 
 # Switch to non-root user
 USER gpt2

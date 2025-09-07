@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import os
+import logging
 
 
 def load_tokens(filename):
@@ -28,8 +29,10 @@ class DataLoaderLite:
         self.shards = shards
         assert len(shards) > 0, f"no shards found for split {split}"
         if master_process:
-            print(f"found {len(shards)} shards for split {split}")
+            self.logger_instance.info(f"found {len(shards)} shards for split {split}")
         self.reset()
+
+        self.logger_instance = logging.getLogger(__name__)
 
     def reset(self): # reset data loader as do model eval every 100th iteration
         # state, init at shard zero

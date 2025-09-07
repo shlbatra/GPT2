@@ -1,6 +1,8 @@
 import torch
 import torch.distributed as dist
+import torch.nn.functional as F
 import os
+import logging
 
 class Evaluator:
     def __init__(self, model, optimizer, config, ddp_config, logger):
@@ -12,11 +14,13 @@ class Evaluator:
         self.ddp_config = ddp_config
         self.logger = logger
 
+        self.logger_instance = logging.getLogger(__name__)
+        
         assert self.config.total_batch_size % (self.config.B * self.config.T * self.ddp_config['ddp_world_size']) == 0, "make sure total_batch_size is divisible by B * T * ddp_world_size"
         grad_accum_steps = self.config.total_batch_size // (self.config.B * self.config.T * self.ddp_config['ddp_world_size'])
         if self.ddp_config['master_process']:
-            print(f"total desired batch size: {self.config.total_batch_size}")
-            print(f"=> calculated gradient accumulation steps: {grad_accum_steps}")
+            self.logger_instance.info(f"total desired batch size: {self.config.total_batch_size}")
+            self.logger_instance.info(f"=> calculated gradient accumulation steps: {grad_accum_steps}")
 
     def evaluate(self, val_loader, step, last_step):
         """Execute evaluate step"""
@@ -34,7 +38,7 @@ class Evaluator:
         if self.ddp_config['ddp']:
             dist.all_reduce(val_loss_accum, op=dist.ReduceOp.AVG)
         if self.ddp_config['master_process']:
-            print(f"validation loss: {val_loss_accum.item():.4f}")
+            self.logger_instance.info(f"validation loss: {val_loss_accum.item():.4f}")
             return val_loss_accum
 
     def generate(self, num_return_sequences, max_length, encoder):
@@ -94,6 +98,6 @@ class Evaluator:
             num_correct_norm = num_correct_norm.item()
         acc_norm = num_correct_norm / num_total
         if self.ddp_config['master_process']:
-            print(f"HellaSwag accuracy: {num_correct_norm}/{num_total}={acc_norm:.4f}")
+            self.logger_instance.info(f"HellaSwag accuracy: {num_correct_norm}/{num_total}={acc_norm:.4f}")
             with open(self.logger, "a") as f:
                 f.write(f"{step} hella {acc_norm:.4f}\n")

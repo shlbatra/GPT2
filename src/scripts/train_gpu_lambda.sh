@@ -5,7 +5,7 @@ ls ~/.ssh
 cat ~/.ssh/id_ed25519.pub -> copy to vm ssh 
 
 # 1. SSH into your instance
-ssh ubuntu@150.136.113.47
+ssh ubuntu@132.145.193.67
 
 # 2. Create project directory
 sudo apt update

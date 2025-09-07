@@ -2,6 +2,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 import torch
 import tiktoken
 import time
+import logging
 from data_scripts.dataload import DataLoaderLite
 from gpt_module.gpt import GPT, GPTConfig
 from training.config import TrainingConfig
@@ -21,7 +22,20 @@ if __name__ == "__main__":
     ddp_world_size = distributed_config['ddp_world_size']
     device = distributed_config['device']
     device_type = distributed_config['device_type']
-    print(f"ddp: {ddp}, ddp_rank: {ddp_rank}, ddp_local_rank: {ddp_local_rank}, ddp_world_size: {ddp_world_size}, device: {device}, device_type: {device_type}")
+    # Setup logging
+    import sys
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stdout),
+            logging.FileHandler('training.log')
+        ],
+        force=True
+    )
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"ddp: {ddp}, ddp_rank: {ddp_rank}, ddp_local_rank: {ddp_local_rank}, ddp_world_size: {ddp_world_size}, device: {device}, device_type: {device_type}")
     
     TrainingConfig = TrainingConfig() # instantiate the config
     max_steps = TrainingConfig.max_steps
@@ -96,7 +110,7 @@ if __name__ == "__main__":
             for i in range(num_return_sequences):
                 tokens = xgen[i, :max_length].tolist()
                 decoded = enc.decode(tokens)
-                print(f"rank {ddp_rank} sample {i}: {decoded}")
+                logger.info(f"rank {ddp_rank} sample {i}: {decoded}")
 
         # do one step of the optimization
         model_trainer.train_step(step, t0)
@@ -104,6 +118,6 @@ if __name__ == "__main__":
         # save evaluation and checkpoint every 10000 steps
         if step % 10000 == 0 and step >= 0 and ddp_rank == 0: # 
             CheckpointConfig.save_checkpoint(raw_model, optimizer, GPTConfig, step, val_loss, CheckpointConfig.checkpoint_dir)
-            print(f"Checkpoint saved at step {step}")
+            logger.info(f"Checkpoint saved at step {step}")
 
     DDPConfig.destroy_distributed()

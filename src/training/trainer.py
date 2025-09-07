@@ -2,6 +2,7 @@ import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP  
 import time
+import logging
 
 class Trainer:
     def __init__(self, model, optimizer, train_loader, config, ddp_config, logger):
@@ -18,9 +19,11 @@ class Trainer:
         
         self.grad_accum_steps = self.config.total_batch_size // (self.config.B * self.config.T * self.ddp_config['ddp_world_size'])
         
+        self.logger_instance = logging.getLogger(__name__)
+        
         if self.ddp_config['master_process']:
-            print(f"total desired batch size: {self.config.total_batch_size}")
-            print(f"=> calculated gradient accumulation steps: {self.grad_accum_steps}")
+            self.logger_instance.info(f"total desired batch size: {self.config.total_batch_size}")
+            self.logger_instance.info(f"=> calculated gradient accumulation steps: {self.grad_accum_steps}")
 
     def train_step(self, step, t0):
         """Execute single training step with gradient accumulation"""
@@ -58,6 +61,6 @@ class Trainer:
         tokens_processed = self.train_loader.B * self.train_loader.T * self.grad_accum_steps * self.ddp_config['ddp_world_size']
         tokens_per_sec = tokens_processed / dt
         if self.ddp_config['master_process']:
-            print(f"step {step:5d} | loss: {loss_accum.item():.6f} | lr {lr:.4e} | norm: {norm:.4f} | dt: {dt*1000:.2f}ms | tok/sec: {tokens_per_sec:.2f}")
+            self.logger_instance.info(f"step {step:5d} | loss: {loss_accum.item():.6f} | lr {lr:.4e} | norm: {norm:.4f} | dt: {dt*1000:.2f}ms | tok/sec: {tokens_per_sec:.2f}")
             with open(self.logger, "a") as f:
                 f.write(f"{step} train {loss_accum.item():.6f}\n")

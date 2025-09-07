@@ -79,7 +79,9 @@ if __name__ == "__main__":
 
         # once in a while evaluate our validation loss
         if step % 250 == 0 or last_step:
-            model_evaluator.evaluate(val_loader, step, last_step)
+            val_loss = model_evaluator.evaluate(val_loader, step, last_step)
+            with open(log_file, "a") as f: # open for writing to clear the file - train loss, val loss and hellaswag accuracy
+                f.write(f"{step} val {val_loss.item():.4f}\n")
 
         # once in a while evaluate hellaswag - todo fix this
         # if (step % 250 == 0 or last_step) and (not use_compile): # make sure not compile
@@ -98,5 +100,10 @@ if __name__ == "__main__":
 
         # do one step of the optimization
         model_trainer.train_step(step, t0)
+        
+        # save evaluation and checkpoint every 10000 steps
+        if step % 10000 == 0 and step >= 0 and ddp_rank == 0: # 
+            CheckpointConfig.save_checkpoint(raw_model, optimizer, GPTConfig, step, val_loss, CheckpointConfig.checkpoint_dir)
+            print(f"Checkpoint saved at step {step}")
 
     DDPConfig.destroy_distributed()

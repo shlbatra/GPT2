@@ -35,20 +35,7 @@ class Evaluator:
             dist.all_reduce(val_loss_accum, op=dist.ReduceOp.AVG)
         if self.ddp_config['master_process']:
             print(f"validation loss: {val_loss_accum.item():.4f}")
-            with open(self.logger, "a") as f:
-                f.write(f"{step} val {val_loss_accum.item():.4f}\n")
-            if step > 0 and (step % 5000 == 0 or last_step):
-                # optionally write model checkpoints
-                checkpoint_path = os.path.join(self.logger.log_dir, f"model_{step:05d}.pt")
-                checkpoint = { # save model and come back later to it and also save optimizer.state_dict() - think through state of the model
-                    'model': self.model.state_dict(),
-                    'config': self.model.config,
-                    'step': step,
-                    'val_loss': val_loss_accum.item()
-                }
-                # you might also want to add optimizer.state_dict() and
-                # rng seeds etc., if you wanted to more exactly resume training
-                torch.save(checkpoint, checkpoint_path)
+            return val_loss_accum
 
     def generate(self, num_return_sequences, max_length, encoder):
         tokens = encoder.encode("Hello, I'm a language model,")

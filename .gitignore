@@ -215,3 +215,7 @@ uv.lock
 
 # gradient files
 .gradient/
+
+#checkpoints
+src/checkpoints/checkpoint.pt
+src/checkpoints/*

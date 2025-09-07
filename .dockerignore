@@ -95,3 +95,7 @@ temp/
 .cache/
 **/cache/
 **/__pycache__/
+
+#checkpoints
+src/checkpoints/checkpoint.pt
+src/checkpoints/*

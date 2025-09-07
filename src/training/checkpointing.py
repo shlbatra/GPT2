@@ -10,14 +10,18 @@ class CheckpointConfig:
         with open(self.log_file, "w") as f: # open for writing to clear the file - train loss, val loss and hellaswag accuracy
             pass
 
-    def save_checkpoint(model, config, step, val_loss, log_dir):
+    @staticmethod
+    def save_checkpoint(model, optimizer, config, step, val_loss, log_dir):
         # optionally write model checkpoints
         checkpoint_path = os.path.join(log_dir, f"model_{step:05d}.pt")
-        checkpoint = { # save model and come back later to it and also save optimizer.state_dict() - think through state of the model
+        checkpoint = {
             'model': model.state_dict(),
+            'optimizer': optimizer.state_dict(),
             'config': model.config,
             'step': step,
-            'val_loss': val_loss.item()
+            'val_loss': val_loss.item(),
+            'torch_rng_state': torch.get_rng_state(),
+            'torch_cuda_rng_state': torch.cuda.get_rng_state() if torch.cuda.is_available() else None
         }
         # you might also want to add optimizer.state_dict() and
         # rng seeds etc., if you wanted to more exactly resume training

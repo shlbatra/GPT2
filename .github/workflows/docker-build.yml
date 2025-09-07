@@ -19,10 +19,27 @@ jobs:
         sudo rm -rf "$AGENT_TOOLSDIRECTORY"
         df -h
 
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
     - name: Build Docker image
       run: |
-        docker build -t gpt2-training:latest .
+        docker build -t shlbatra123/gpu_docker_image:latest .
+        
+    - name: Push Docker image
+      run: |
+        docker push shlbatra123/gpu_docker_image:latest
         
     - name: Test image
       run: |
-        docker run --rm gpt2-training:latest python -c "import torch; print('Build successful')"
+        docker run --rm shlbatra123/gpu_docker_image:latest python -c "import torch; print('Build successful')"
+
+    # - name: Deploy to Gradient
+    #   run: |
+    #     pip install gradient-python
+    #     python deploy_to_gradient.py
+    #   env:
+    #     PAPERSPACE_API_KEY: ${{ secrets.PAPERSPACE_API_KEY }}

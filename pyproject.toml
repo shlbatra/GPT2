@@ -19,5 +19,8 @@ dependencies = [
     "torchvision>=0.22.0",
     "transformers>=4.51.3",
     "paperspace>=0.2.0",
-    "gradient==3.0.0b4"
+    "gradient==2.99.4",
+    "nebius==0.2.57"
 ]
+[tool.uv]
+prerelease = "allow"

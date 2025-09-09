@@ -22,9 +22,10 @@ echo "deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] h
 # Update and install
 sudo apt update
 sudo apt install nvidia-container-toolkit
-sudo reboot
 sudo nvidia-ctk runtime configure --runtime=docker
+sudo reboot
 nvidia-smi
+
 # 3. Create your Python scripts and Dockerfile
 # (upload via scp, git clone, or create directly)
 
@@ -35,6 +36,6 @@ sudo docker pull shlbatra123/gpu_docker_image:latest
 # 5. Run your scripts with GPU access
 # sudo docker run --gpus all --rm shlbatra123/gpu_docker_image:latest python data/fineweb.py && python train.py
 # sudo docker run --runtime=nvidia --rm -it shlbatra123/gpu_docker_image:latest bash 
-sudo docker run --runtime=nvidia --rm shlbatra123/gpu_docker_image:latest bash -c "python data_scripts/fineweb.py && python train_gpt.py"
+sudo docker run --runtime=nvidia --rm shlbatra123/gpu_docker_image:latest bash -c "python -u data_scripts/fineweb.py && torchrun --nproc_per_node=1 train_gpt.py"
 # 6. Download results to local machine (from local terminal)
 scp -r ubuntu@129.213.148.102:~/my-gpu-project/results ./

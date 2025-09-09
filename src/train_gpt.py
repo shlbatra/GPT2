@@ -105,7 +105,7 @@ if __name__ == "__main__":
         if ((step > 0 and step % 250 == 0) or last_step) and (not use_compile):
             num_return_sequences = 4
             max_length = 32
-            xgen = model_evaluator.generate(model_trainer.model, num_return_sequences, max_length, encoder=enc)
+            xgen = model_evaluator.generate(num_return_sequences, max_length, enc)
             # print the generated text
             for i in range(num_return_sequences):
                 tokens = xgen[i, :max_length].tolist()

@@ -36,6 +36,6 @@ sudo docker pull shlbatra123/gpu_docker_image:latest
 # 5. Run your scripts with GPU access
 # sudo docker run --gpus all --rm shlbatra123/gpu_docker_image:latest python data/fineweb.py && python train.py
 # sudo docker run --runtime=nvidia --rm -it shlbatra123/gpu_docker_image:latest bash 
-sudo docker run --runtime=nvidia --rm shlbatra123/gpu_docker_image:latest bash -c "python -u data_scripts/fineweb.py && torchrun --nproc_per_node=1 train_gpt.py"
+sudo docker run --runtime=nvidia --rm shlbatra123/gpu_docker_image:latest bash -c "uv pip install "google-cloud-storage>=2.10.0" && torchrun --nproc_per_node=2 train_gpt.py"
 # 6. Download results to local machine (from local terminal)
 scp -r ubuntu@129.213.148.102:~/my-gpu-project/results ./

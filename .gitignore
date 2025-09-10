@@ -219,3 +219,6 @@ uv.lock
 #checkpoints
 src/checkpoints/checkpoint.pt
 src/checkpoints/*
+
+# GCP credentials
+deeplearning-sahil-e50332de6687.json

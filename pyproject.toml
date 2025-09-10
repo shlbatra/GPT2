@@ -20,7 +20,8 @@ dependencies = [
     "transformers>=4.51.3",
     "paperspace>=0.2.0",
     "gradient==2.99.4",
-    "nebius==0.2.57"
+    "nebius==0.2.57",
+    "google-cloud-storage>=2.10.0"
 ]
 [tool.uv]
 prerelease = "allow"

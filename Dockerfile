@@ -39,7 +39,6 @@ COPY --chown=gpt2:gpt2 src/training/ /app/training/
 COPY --chown=gpt2:gpt2 src/scripts/ /app/scripts/
 COPY --chown=gpt2:gpt2 src/data_scripts /app/data_scripts
 COPY --chown=gpt2:gpt2 src/train_gpt.py /app/
-COPY gcp-key.json /app/gcp-key.json
 COPY pyproject.toml /app/
 
 # Create virtual environment and install dependencies

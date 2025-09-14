@@ -10,6 +10,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2  # Needed to compare with previous commit
     
     - name: Free up space
       run: |
@@ -19,15 +21,34 @@ jobs:
         sudo rm -rf "$AGENT_TOOLSDIRECTORY"
         df -h
 
+    - name: Detect dependency changes
+      id: deps
+      run: |
+        if git diff --name-only HEAD~1 | grep -E "(pyproject.toml|Dockerfile)"; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+          echo "Dependencies changed - full build required"
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+          echo "Only source code changed - runtime build sufficient"
+        fi
+
     - name: Login to Docker Hub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         
-    - name: Build Docker image
+    - name: Build Docker image (Full build)
+      if: steps.deps.outputs.changed == 'true'
       run: |
-        docker build -t shlbatra123/gpu_docker_image:latest .
+        echo "Building full image with dependencies..."
+        DOCKER_BUILDKIT=1 docker build -t shlbatra123/gpu_docker_image:latest .
+        
+    - name: Build Docker image (Runtime only)  
+      if: steps.deps.outputs.changed != 'true'
+      run: |
+        echo "Building runtime-only image..."
+        DOCKER_BUILDKIT=1 docker build --target runtime -t shlbatra123/gpu_docker_image:latest .
         
     - name: Push Docker image
       run: |

@@ -5,7 +5,8 @@ ls ~/.ssh
 cat ~/.ssh/id_ed25519.pub -> copy to vm ssh 
 
 # 1. SSH into your instance
-ssh ubuntu@132.145.193.67
+ssh paperspace@184.105.3.177
+
 
 # 2. Create project directory
 sudo apt update
@@ -21,14 +22,16 @@ echo "deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] h
 
 # Update and install
 sudo apt update
-sudo apt install nvidia-container-toolkit
-sudo nvidia-ctk runtime configure --runtime=docker -y
+sudo apt install nvidia-container-toolkit -y
+sudo nvidia-ctk runtime configure --runtime=docker
 sudo reboot
+
+# (upload via scp, git clone, or create directly)
+scp -r gcp-key.json paperspace@184.105.3.177:~/my-gpu-project/
+
+ssh paperspace@184.105.3.177
 nvidia-smi
 
-# 3. Create your Python scripts and Dockerfile
-# (upload via scp, git clone, or create directly)
-scp -r gcp-key.json paperspace@184.105.4.46:~/my-gpu-project/
 # 4. Pull Docker image and run container
 sudo docker system prune -a
 sudo docker pull shlbatra123/gpu_docker_image:latest

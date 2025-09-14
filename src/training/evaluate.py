@@ -1,8 +1,8 @@
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
-import os
 import logging
+from data_scripts.hellaswag import render_example, iterate_examples, get_most_likely_row
 
 class Evaluator:
     def __init__(self, model, optimizer, config, ddp_config, logger):
@@ -70,7 +70,7 @@ class Evaluator:
         return xgen
 
 
-    def evaluate_hellaswag(self, step):
+    def evaluate_hellaswag(self, val_loader, step, last_step):
         num_correct_norm = 0
         num_total = 0
         for i, example in enumerate(iterate_examples("val")):
@@ -98,6 +98,5 @@ class Evaluator:
             num_correct_norm = num_correct_norm.item()
         acc_norm = num_correct_norm / num_total
         if self.ddp_config['master_process']:
-            self.logger_instance.info(f"HellaSwag accuracy: {num_correct_norm}/{num_total}={acc_norm:.4f}")
-            with open(self.logger, "a") as f:
-                f.write(f"{step} hella {acc_norm:.4f}\n")
+            self.logger_instance.info(f"Hellaswag Accuracy: {acc_norm.item():.4f}")
+        return acc_norm

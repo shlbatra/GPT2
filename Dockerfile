@@ -71,7 +71,6 @@ ENV PATH="/app/.venv/bin:$PATH"
 # Copy application code
 COPY --chown=gpt2:gpt2 src/gpt_module/ /app/gpt_module/
 COPY --chown=gpt2:gpt2 src/training/ /app/training/
-COPY --chown=gpt2:gpt2 src/scripts/ /app/scripts/
 COPY --chown=gpt2:gpt2 src/data_scripts /app/data_scripts
 COPY --chown=gpt2:gpt2 src/train_gpt.py /app/
 

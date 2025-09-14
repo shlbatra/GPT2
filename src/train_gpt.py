@@ -99,8 +99,11 @@ if __name__ == "__main__":
                     f.write(f"{step} val {val_loss.item():.4f}\n")
 
         # once in a while evaluate hellaswag - todo fix this
-        # if (step % 250 == 0 or last_step) and (not use_compile): # make sure not compile
-        #     model_evaluator.evaluate_hellaswag(val_loader, step, last_step)
+        if (step % 250 == 0 or last_step) and (not use_compile): # make sure not compile
+            acc_norm = model_evaluator.evaluate_hellaswag(val_loader, step, last_step)
+            if ddp_rank == 0 and acc_norm is not None:
+                with open(log_file, "a") as f:
+                    f.write(f"HellaSwag accuracy at {step}: {acc_norm:.4f}")
 
         # once in a while generate from the model (except step 0, which is noise)
         if ((step > 0 and step % 250 == 0) or last_step) and (not use_compile):

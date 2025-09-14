@@ -36,11 +36,14 @@ nvidia-smi
 sudo docker system prune -a
 sudo docker pull shlbatra123/gpu_docker_image:latest
 
-# 5. Run your scripts with GPU access
+# 5. Run your scripts with GPU access.
 # sudo docker run --runtime=nvidia --rm -it shlbatra123/gpu_docker_image:latest bash 
 # sudo docker run --runtime=nvidia --rm shlbatra123/gpu_docker_image:latest bash -c "uv pip install "google-cloud-storage>=2.10.0" && torchrun --nproc_per_node=2 train_gpt.py"
+# -e GOOGLE_APPLICATION_CREDENTIALS=/app/gcp-key.json
+
 mkdir -p checkpoints
-sudo docker run --runtime=nvidia -v $(pwd)/gcp-key.json:/app/gcp-key.json -v $(pwd)/checkpoints:/app/checkpoints -e GOOGLE_APPLICATION_CREDENTIALS=/app/gcp-key.json --rm shlbatra123/gpu_docker_image:latest bash -c "torchrun --nproc_per_node=2 train_gpt.py"
+
+sudo docker run --runtime=nvidia -v $(pwd)/gcp-key.json:/app/gcp-key.json -v $(pwd)/checkpoints:/app/checkpoints --rm shlbatra123/gpu_docker_image:latest bash -c "torchrun --nproc_per_node=2 train_gpt.py"
 
 # 6. Download results to local machine (from local terminal)
 scp -r ubuntu@129.213.148.102:~/my-gpu-project/results ./

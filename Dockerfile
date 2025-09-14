@@ -75,8 +75,9 @@ COPY --chown=gpt2:gpt2 src/scripts/ /app/scripts/
 COPY --chown=gpt2:gpt2 src/data_scripts /app/data_scripts
 COPY --chown=gpt2:gpt2 src/train_gpt.py /app/
 
-# Create cache directory
-RUN mkdir -p /app/.cache/huggingface && chown -R gpt2:gpt2 /app/.cache
+# Create cache directory and fix permissions for entire app folder
+RUN mkdir -p /app/.cache/huggingface && \
+    chown -R gpt2:gpt2 /app
 
 # Switch to non-root user
 USER gpt2
